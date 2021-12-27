@@ -1,0 +1,72 @@
+/***********************************************-*-C++-*-*******************/
+/*  eNMR_2D       21.12.21 			*/
+/***************************************************************************/
+/***************************************************************************/
+/*	Short Description :					*/
+/*	MOSY spectra processing	    */
+/***************************************************************************/
+/***************************************************************************/
+/*  Description :	
+/* The program calculates MOSY spectrum.                                   */
+/* For this type of spectra, the F1 is the electrophoretic mobility   */
+/* axis [m2/sV].                                                           */
+/* Before using the program, you need to correct the phase for each slice! */
+/***************************************************************************/
+/***************************************************************************/
+/*	Author	: Kulikovskaya Natalia			*/
+/*	Organisation	: ZIOC RAS		      	*/
+/*	Email		: n.kulikovskaya@ioc.ac.ru	*/
+/***************************************************************************/
+
+  /*  Parameters */
+  float Vstep=50; // step of Voltage in V
+  float L=0.03275; // distance between electrodes in m
+  float BigD = 200; // BIG Delta in ms
+  float LilD = 0.500; // LITLE Delta in ms
+  float G = 0.18; // Gradient value in T/m
+  float gamma=42576384.74; //hyromagnetic ratio in Hz/T
+
+  float swh; //step
+  float uMax;  //max value in mobility axis
+
+    int pparmod,TD1;
+
+  /* Check that the data is a 2D spectrum */
+  FETCHPARS("PPARMOD", &pparmod)
+  if (pparmod != 1)
+    STOPMSG("Script for 2D data only");
+    
+  /* Get parameters */ 
+  FETCHPARS("d20", &BigD);
+  FETCHPARS("p16", &LilD);
+  
+  /* User input */
+  GETFLOAT("Enter Voltage step, V", Vstep);
+  GETFLOAT("Enter BIG delta, ms", BigD);    
+  GETFLOAT("Enter little delta, ms", LilD);  
+  GETFLOAT("Enter gradient strenght, T/m", G);
+		
+  /* Calculation of electrophoretic mobility axis */
+	swh = (1/Vstep)*L/(gamma*BigD*LilD/1000000*G)*100000000; 
+	
+	STOREPAR1S("NUC1","off"); 
+	STOREPAR1("NUC1","off");
+  
+	STOREPAR1S("SWH",swh); 
+	STOREPAR1("SWH",swh);
+	
+	uMax = swh/2;
+	
+  /* Process the data */
+	XFB;
+  STOREPAR1S("AXUNIT","10e-8 m^2/V/s"); //utits for electrophoretic mobility
+  STOREPAR1("AXUNIT","10e-8 m^2/V/s"); 
+  STOREPAR1S("AXLEFT",-uMax);
+  STOREPAR1S("AXRIGHT",uMax);
+  STOREPAR1("AXLEFT",-uMax);
+  STOREPAR1("AXRIGHT",uMax);
+
+ VIEWDATA_SAMEWIN;
+
+QUIT
+
